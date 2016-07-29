@@ -8,7 +8,7 @@
  *  -i is to force immediate read without waiting for <readable>.
  *  -n to not read after <readable>
  *  -t read after x msec
- *  -f apply fix by adding and extra stream.read(1)
+ *  -f apply fix by using once instead of on
  */
 const fs = require('fs');
 const logEvents = require('@cool-blue/logevents')();
@@ -81,7 +81,7 @@ function main(repeats) {
         logit(`after timeout`, options.timer);
 
     if(!options["not-on-readable"])
-        stream.once('readable', (() => {
+        stream[options.fix ? "once" : "on"]('readable', (() => {
             console.log(`${stamp()}setting listener on readable`);
             var count = 0;
             return () => {
