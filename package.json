@@ -3,24 +3,27 @@
   "version": "0.0.1",
   "description": "experiments with node js read/write stream.",
   "main": "testFile.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cool-Blue/node-file-streams.git"
   },
   "keywords": [
     "createWriteStream",
     "stdout",
     "stream"
   ],
-  "author": "Scool.blue",
+  "author": "cool.blue",
   "license": "MIT",
-  "bugs": {
-  },
   "dependencies": {
+    "command-line-args": "^3.0.0"
   },
   "devDependencies": {
     "@cool-blue/logevents": "0.0.1",
     "moment": "^2.14.1"
   },
-  "homepage": "https://github.com/cool-Blue/tapit#readme"
+  "bugs": {
+    "url": "https://github.com/cool-Blue/node-file-streams/issues"
+  },
+  "homepage": "https://github.com/cool-Blue/node-file-streams#readme"
 }
