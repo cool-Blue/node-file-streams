@@ -55,4 +55,4 @@
 
     main(options.repeats);
     
-### GIT Repo with complete working example
+### [GIT Repo with complete working example](https://github.com/cool-Blue/node-file-streams)

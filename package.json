@@ -19,7 +19,7 @@
     "command-line-args": "^3.0.0"
   },
   "devDependencies": {
-    "@cool-blue/logevents": "0.0.1",
+    "@cool-blue/logevents": "^0.0.3",
     "moment": "^2.14.1"
   },
   "bugs": {
