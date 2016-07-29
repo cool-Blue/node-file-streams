@@ -81,7 +81,7 @@ function main(repeats) {
         logit(`after timeout`, options.timer);
 
     if(!options["not-on-readable"])
-        stream.on('readable', (() => {
+        stream.once('readable', (() => {
             console.log(`${stamp()}setting listener on readable`);
             var count = 0;
             return () => {
