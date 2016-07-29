@@ -1,0 +1,26 @@
+{
+  "name": "node-file-streams",
+  "version": "0.0.1",
+  "description": "experiments with node js read/write stream.",
+  "main": "testFile.js",
+  "scripts": {
+  },
+  "repository": {
+  },
+  "keywords": [
+    "createWriteStream",
+    "stdout",
+    "stream"
+  ],
+  "author": "Scool.blue",
+  "license": "MIT",
+  "bugs": {
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@cool-blue/logevents": "0.0.1",
+    "moment": "^2.14.1"
+  },
+  "homepage": "https://github.com/cool-Blue/tapit#readme"
+}
