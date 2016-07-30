@@ -5,21 +5,13 @@
  *
  * Usage: node testFile [-i][-r n][-n][-t x][-f]
  *  -r is for n repeats (default 0)
- *  -i is to force immediate read without waiting for <readable>.
- *  -n to not read after <readable>
- *  -t read after x msec
- *  -f apply fix by using once instead of on
  */
 const fs = require('fs');
 const logEvents = require('@cool-blue/logevents')();
 
 const commandLineArgs = require('command-line-args');
 const optionDefinitions = [
-    {name: 'not-on-readable', alias: 'n', type: Boolean},
-    {name: 'immediate', alias: 'i', type: Boolean},
-    {name: 'repeats', alias: 'r', type: Number, defaultValue: 0},
-    {name: 'timer', alias: 't', type: Number, defaultValue: 0},
-    {name: 'fix', alias: 'f', type: Boolean}
+    {name: 'repeats', alias: 'r', type: Number, defaultValue: 0}
 ];
 const options = commandLineArgs(optionDefinitions);
 
@@ -35,6 +27,7 @@ var specs = {
             // log events from the Stream
             var streamEvents = ['pipe', 'unpipe', 'finish', 'cork', 'close', 'drain', 'error', 'end', 'readable'];
             logEvents.open((_stream.name = "stream", _stream), streamEvents);
+            console.log(`${stamp()}listeners bound`);
 
             // return the monitored Stream
             return _stream
@@ -55,45 +48,78 @@ var ESC    = '\x1b[',
     YELLOW = '33',
     BLUE   = '34';
 
-function logit(context, delay) {
-    delay = delay || 0;
-    function _main() {
-        result = stream.read();
-        console.log(`\n${stamp()}${context}:\n${ESC}${WHITE}m${result}${ESC}m`)
-    }
+function reset(inFile, content) {
 
-    if(delay) return setTimeout(_main, delay);
-    return _main();
+    console.log(`${ESC}${BOLD};${BLUE}m${stamp()}delete and re-write inFile${ESC}m`);
+    var _content, _body;
+
+    //delete the file if it exists
+    try {
+        fs.unlinkSync(inFile);
+    } catch(e) {
+        // just ignore it
+        console.warn("WARNING: inFile does not exist")
+    }
+    //and rewrite the original content to it
+    _content = content.reduce(function(res, line) {
+        return res + line + "\n";
+    }, "");
+    _body = Array(20000).fill(_content).reduce(function(res, e, i){
+        return `${res}\n${i} ${e}`
+    }, "");
+    fs.writeFileSync(inFile, _body);
+
+    //return the file content for reference
+    return _content;
+}
+
+function readIt(stream, context, next) {
+    var body = "";
+
+    stream
+        .on('readable', (() => {
+            console.log(`${stamp()}setting listener on readable`);
+            var count = 0;
+            return (fromlogit) => {
+                var chunk;
+                chunk = stream.read();
+                body += chunk;
+                console.log(`read ${chunk ? chunk.length : 0} bytes:\t${++count}\t${context}`);
+            }
+        })())
+        .on('close', (() => {
+            console.log(`${stamp()}setting listener on close`);
+            return function(){
+                console.log(`${stamp()}callback from close\t${context}`);
+                next.bind(stream)(body)
+            }
+        })());
+
+    return stream;
 }
 
 function main(repeats) {
 
-    console.log(`\n${ESC}${BOLD};${RED}m${stamp()}starting main: ${repeats}${ESC}m`);
+    var startTime = stamp();
+
+    console.log(`\n${ESC}${BOLD};${RED}m${startTime}starting main: ${repeats}${ESC}m`);
+
+    // prime the input file and return it's contents
+    body = reset(specs.inFile, content);
 
     // connect a readstream to the same file
     stream = specs.Stream();
 
     // try to read it
-    if(options.immediate)
-        logit(`immediate`, 0);
-
-    if(options.timer)
-        logit(`after timeout`, options.timer);
-
-    if(!options["not-on-readable"])
-        stream[options.fix ? "once" : "on"]('readable', (() => {
-            console.log(`${stamp()}setting listener on readable`);
-            var count = 0;
-            return () => {
-                logit(`after readable:\t${++count}`, 0);
-                if(repeats)
-                    stream.on('close', main.bind(this, --repeats))
+        readIt(stream, `main ${startTime}`, function(result){
+            console.log(`\n${stamp()}result:${ESC}${WHITE}m${result ? result.length : 0} bytes read${ESC}m${ESC}1A`);
+            if(repeats) {
+                main(--repeats)
             }
-        })());
-    else
-        main.bind(this, --repeats);
+        });
 
     console.log(`${ESC}${BOLD};${RED}m${stamp()}ending main: ${repeats}${ESC}m\n`);
+
 }
 
 main(options.repeats);
