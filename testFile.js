@@ -24,6 +24,9 @@ var specs = {
             var _stream = fs.createReadStream(this.inFile);
             console.log(`${stamp()}read stream created`);
 
+            //bind the reader
+            _stream.readAll = readAll;
+
             // log events from the Stream
             var streamEvents = ['pipe', 'unpipe', 'finish', 'cork', 'close', 'drain', 'error', 'end', 'readable'];
             logEvents.open((_stream.name = "stream", _stream), streamEvents);
@@ -32,8 +35,7 @@ var specs = {
             // return the monitored Stream
             return _stream
         },
-    },
-    body, stream, result;
+    };
 
 var content = ["capture-this!", "日本語", "-k21.12-0k-ª–m-md1∆º¡∆ªº"];
 var stamp = () => `${now(Date.now()).format("HH:mm:s:SSSS")}\t`;
@@ -73,26 +75,32 @@ function reset(inFile, content) {
     return _content;
 }
 
-function readIt(stream, context, next) {
+function readAll(context, next) {
+    var stream = this;
     var body = "";
+
+    function readChunk (fromreadit) {
+        var chunk;
+        chunk = stream.read();
+        body += chunk;
+        console.log(`read ${chunk ? chunk.length : 0} bytes:\t${context}`);
+    }
+    function onClose(fromreadit){
+        console.log(`${stamp()}callback from close\t${context}`);
+        next.bind(stream)(body)
+
+        this.removeListener('readable', readChunk);
+        this.removeListener('close', onClose);
+    }
 
     stream
         .on('readable', (() => {
             console.log(`${stamp()}setting listener on readable`);
-            var count = 0;
-            return (fromlogit) => {
-                var chunk;
-                chunk = stream.read();
-                body += chunk;
-                console.log(`read ${chunk ? chunk.length : 0} bytes:\t${++count}\t${context}`);
-            }
+            return readChunk
         })())
         .on('close', (() => {
             console.log(`${stamp()}setting listener on close`);
-            return function(){
-                console.log(`${stamp()}callback from close\t${context}`);
-                next.bind(stream)(body)
-            }
+            return onClose
         })());
 
     return stream;
@@ -100,7 +108,8 @@ function readIt(stream, context, next) {
 
 function main(repeats) {
 
-    var startTime = stamp();
+    var startTime = stamp(),
+        body, stream, result;
 
     console.log(`\n${ESC}${BOLD};${RED}m${startTime}starting main: ${repeats}${ESC}m`);
 
@@ -111,12 +120,11 @@ function main(repeats) {
     stream = specs.Stream();
 
     // try to read it
-        readIt(stream, `main ${startTime}`, function(result){
-            console.log(`\n${stamp()}result:${ESC}${WHITE}m${result ? result.length : 0} bytes read${ESC}m${ESC}1A`);
-            if(repeats) {
-                main(--repeats)
-            }
-        });
+    stream.readAll(`main ${startTime}`, function(result){
+        console.log(`\n${stamp()}result:${ESC}${WHITE}m${result ? result.length : 0} bytes read${ESC}m${ESC}1A`);
+        if(repeats)
+            main(--repeats)
+    });
 
     console.log(`${ESC}${BOLD};${RED}m${stamp()}ending main: ${repeats}${ESC}m\n`);
 
